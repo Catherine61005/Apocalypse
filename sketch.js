@@ -1,12 +1,13 @@
 var player, zombie1, zombie2, zombie3, ground;
 var zombie1img,zombie2img,zombie3img,playerimg;
 var obst1,obst2,obstimg1,obstimg2;
-var backgrd,backgrdimg;
+var backgrd1,backgrd2,backgrdimg1,backgrdimg2;
 var timecount = 0;
 var obstaclegrp1, obstaclegrp2;
 var visibility;
 var plyrx,plyry;
 var playerXY = [];
+var gameState = 0;
 
 function preload()
 {
@@ -15,7 +16,8 @@ function preload()
   zombie1img = loadImage("images/zombie.PNG");
   zombie2img = loadImage("images/zombie2.PNG");
   zombie3img = loadImage("images/zombie3.PNG");
-  backgrdimg = loadImage("images/forest.PNG");
+  backgrdimg1 = loadImage("images/forest.PNG");
+  backgrdimg2 = loadImage("images/finalzombie.PNG");
   obstimg1 = loadImage("images/obst1.PNG");
   obstimg2 = loadImage("images/obst2.PNG");
 }
@@ -24,10 +26,15 @@ function setup()
 {
   createCanvas(windowWidth,windowHeight);
 
-  backgrd = createSprite(displayWidth/2 + 300,displayHeight - 200);
-  backgrd.addImage("background",backgrdimg);
-  backgrd.scale = 3;
-  backgrd.velocityX = 3;
+  backgrd1 = createSprite(displayWidth/2 + 300,displayHeight - 200);
+  backgrd1.addImage("background",backgrdimg1);
+  backgrd1.scale = 3;
+  backgrd1.velocityX = 3;
+
+  backgrd2 = createSprite(displayWidth/2 + 200,displayHeight - 100);
+  backgrd2.addImage("background",backgrdimg2);
+  backgrd2.scale = 3.5;
+  backgrd2.visible = false;
     
   ground = createSprite(displayWidth,displayHeight/4 + 910,displayWidth,20);
   ground.visible = false;
@@ -43,11 +50,11 @@ function setup()
   zombie1.velocityX = -3;
   zombie1.scale = 0.4;
 
-  player.debug = true;
+  player.debug = false;
   player.setCollider("rectangle",0,0,200,200);
 
   obstaclegrp1 = new Group();
-   obstaclegrp2 = new Group();
+  obstaclegrp2 = new Group();
 
   /*zombie2 = createSprite(displayWidth/4 + 1230,displayHeight/4 + 590,10,10);
   zombie2.addImage("zombie",zombie2img);
@@ -66,21 +73,30 @@ function draw()
 {
   background("black");
 
-  camera.position.x = player.x;
-  ground.x = camera.position.x;
-  player.velocityY = player.velocityY  + 0.5;
+  if(gameState === 0)
+  {
+      camera.position.x = player.x;
+      ground.x = camera.position.x;
+      player.velocityY = player.velocityY  + 0.5;
 
-  //console.log(player.y);
+      player.collide(ground);
 
-  player.collide(ground);
+      if (player.isTouching(obstaclegrp1) || player.isTouching(obstaclegrp2))
+          {
+            gameState = 1;
+          }  
 
-  Backgrd();
-  spawnobst();
-  Colliding();
+      Backgrd();
+      spawnobst();
+  }    
 
-  drawSprites();
-
-  survivalTime();
+  else if(gameState === 1)
+    {
+      Colliding();
+    }
+    
+    drawSprites();
+    survivalTime();
 }
 
  function spawnobst()
@@ -112,9 +128,9 @@ function draw()
 
 function Backgrd()
 {
-  if(backgrd.x >= camera.position.x)
+  if(backgrd1.x >= camera.position.x)
     {
-      backgrd.x = camera.position.x-1000;
+      backgrd1.x = camera.position.x-1000;
     }
 }
 
@@ -127,26 +143,18 @@ function keyPressed()
 }
 
 function Colliding()
-{
-  /*if(player)
-  {
-    var pos = [player.x,player.y];
-   playerXY.push(pos)
-    //console.log("player Pos: " + playerXY[0][1]);
-  }*/
-
-  if (player.isTouching(obstaclegrp1) || player.isTouching(obstaclegrp2))
-  {
+{    
     player.velocityX = 0;
-    plyrx = player.x;
-    plyry = player.y;
-    removeSprite(player);
-    push();
-    visibility -= 1;
-    tint(255, visibility);
-    image(playerimg,plyrx,plyry); 
-    pop(); 
-  } 
+    player.visible = false;
+    zombie1.velocityX = 0;
+    zombie1.destroy();
+    obstaclegrp1.setVelocityXEach(0);
+    // obstaclegrp1.destroyEach();
+    obstaclegrp2.setVelocityXEach(0);
+    //obstaclegrp2.destroyEach();
+    backgrd1.velocityX = 0;
+    backgrd2.visible = true;
+     
 }
 
 function survivalTime()
@@ -154,6 +162,7 @@ function survivalTime()
   stroke('red');
   textSize(40);
   fill("white");
-  //timecount = (frameCount/frameRate());
-  text("Survival Time: " + timecount, 150,50);
+  timecount = Math.round((frameCount/frameRate()));
+  text("Survival Time: " + timecount, 150,70);
+
 }
